@@ -2,7 +2,8 @@ import os
 import json
 
 import requests
-from dotenv import load_dotenv
+
+from jWork import Jwork
 
 
 class NalogRuPython:
@@ -15,26 +16,23 @@ class NalogRuPython:
     ACCEPT_LANGUAGE = 'ru-RU;q=1, en-US;q=0.9'
 
     def __init__(self):
-        load_dotenv()  # read environments from .env file
         self.__session_id = None
         self.set_session_id()
+        self.informator=Jwork()
 
     def set_session_id(self) -> None:
         """
         Authorization using INN and password of user lk nalog.ru
         """
-        if os.getenv('CLIENT_SECRET') is None:
-            raise ValueError('OS environments not content "CLIENT_SECRET"')
-        if os.getenv('INN') is None:
-            raise ValueError('OS environments not content "INN"')
-        if os.getenv('PASSWORD') is None:
-            raise ValueError('OS environments not content "PASSWORD"')
+        data=self.informator.getInf()
+        if(data==None):
+            raise ValueError("Нет не использованных записей \n" )
 
         url = f'https://{self.HOST}/v2/mobile/users/lkfl/auth'
         payload = {
-            'inn': os.getenv('INN'),
-            'client_secret': os.getenv('CLIENT_SECRET'),
-            'password': os.getenv('PASSWORD')
+            'inn': data.setdefault('INN'),
+            'client_secret': data.setdefault('CLIENT_SECRET'),
+            'password': data.setdefault('PASSWORD')
         }
         headers = {
             'Host': self.HOST,
@@ -60,25 +58,25 @@ class NalogRuPython:
         :return: Ticket id. Example "5f3bc6b953d5cb4f4e43a06c"
         """
         url = f'https://{self.HOST}/v2/ticket'
-        payload = {'qr': qr}
-        headers = {
-            'Host': self.HOST,
-            'Accept': self.ACCEPT,
-            'Device-OS': self.DEVICE_OS,
-            'Device-Id': self.DEVICE_ID,
-            'clientVersion': self.CLIENT_VERSION,
-            'Accept-Language': self.ACCEPT_LANGUAGE,
-            'sessionId': self.__session_id,
-            'User-Agent': self.USER_AGENT,
-        }
-
-        resp = requests.post(url, json=payload, headers=headers)
-        if resp.status_code != 200:
-            raise IOError(resp.reason)
-        # print(resp)
-        # print(str(resp.json()))
-
-        return resp.json()["id"]
+        if(self.informator.tryToUse()):
+            payload = {'qr': qr}
+            headers = {
+                'Host': self.HOST,
+                'Accept': self.ACCEPT,
+                'Device-OS': self.DEVICE_OS,
+                'Device-Id': self.DEVICE_ID,
+                'clientVersion': self.CLIENT_VERSION,
+                'Accept-Language': self.ACCEPT_LANGUAGE,
+                'sessionId': self.__session_id,
+                'User-Agent': self.USER_AGENT,
+            }
+            resp = requests.post(url, json=payload, headers=headers)
+            if resp.status_code != 200:
+                raise IOError(resp.reason)
+            return resp.json()["id"]
+        else:
+            self.set_session_id()
+            return self._get_ticket_id(qr)
 
     def get_ticket(self, qr: str) -> dict:
         """

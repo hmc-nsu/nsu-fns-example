@@ -1,0 +1,38 @@
+{
+    "1": {
+        "INN": 111,
+        "PASSWORD": "qwerty",
+        "CLIENT_SECRET": "vegan",
+        "INUSE": 0
+    },
+    "2": {
+        "INN": 222,
+        "PASSWORD": "asdfgh",
+        "CLIENT_SECRET": "ne vegan",
+        "INUSE": 0
+    },
+    "3": {
+        "INN": 111,
+        "PASSWORD": "qwerty",
+        "CLIENT_SECRET": "vegan",
+        "INUSE": 0
+    },
+    "4": {
+        "INN": 222,
+        "PASSWORD": "asdfgh",
+        "CLIENT_SECRET": "ne vegan",
+        "INUSE": 0
+    },
+    "5": {
+        "INN": 111,
+        "PASSWORD": "qwerty",
+        "CLIENT_SECRET": "vegan",
+        "INUSE": 0
+    },
+    "6": {
+        "INN": 222,
+        "PASSWORD": "asdfgh",
+        "CLIENT_SECRET": "ne vegan",
+        "INUSE": 0
+    }
+}
