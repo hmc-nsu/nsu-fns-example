@@ -1,122 +1,86 @@
 import json
 import random
 
+from myData import MyDataMass, MyData
+
 
 class Jwork:
-    #Ключевые слова для словаря
-    shtamp = ['INN', 'PASSWORD', 'CLIENT_SECRET', 'INUSE']
 
     def __init__(self):
-        self.i = 0
-        self.data=dict()
-        self.enduse=1
-        self.lastuse=None
+        self.data = MyDataMass()
+        self.enduse = 2
+        self.lastuse = None
 
-    #Сохранить текущий словарь
+    # Сохранить текущий словарь
     def saveDict(self):
         with open("fns_info.json", "w") as write_file:
-            json.dump(self.data, write_file, indent=4)
+            json.dump(self.data.CodeMe(), write_file, indent=4)
 
-    #Создать словарь с иннн, поролем и секрктным полем
-    def doDict(self, inn,password,client_secret)->dict:
-        self.i+=1
-        return {
-            self.i: {
-                str(self.shtamp[0]): inn,
-                self.shtamp[1]: password,
-                self.shtamp[2]: client_secret,
-                self.shtamp[3]: 0
-            }
-        }
+    # Вернуть словарь под номером r, причём только инн, пароль и секретное поле
+    def partDickt(self, r):
+        return self.data.GetI(r)
 
-    #Добавть одно использование к набору данных под номерои r
-    def addUse(self,r):
-        return {r: {
-                str(self.shtamp[0]): self.data.setdefault(r).setdefault(self.shtamp[0]),
-                self.shtamp[1]: self.data.setdefault(r).setdefault(self.shtamp[1]),
-                self.shtamp[2]: self.data.setdefault(r).setdefault(self.shtamp[2]),
-                self.shtamp[3]: int(self.data.setdefault(r).setdefault(self.shtamp[3]))+1
-            }
-        }
-
-    #Обнулить количество использований набора r
-    def zeroedOne(self,r):
-        return {r: {
-                str(self.shtamp[0]): self.data.setdefault(r).setdefault(self.shtamp[0]),
-                self.shtamp[1]: self.data.setdefault(r).setdefault(self.shtamp[1]),
-                self.shtamp[2]: self.data.setdefault(r).setdefault(self.shtamp[2]),
-                self.shtamp[3]: 0
-            }
-        }
-
-    #Вернуть словарь под номером r, причём только инн, пароль и секретное поле
-    def partDickt(self,r):
-        return {
-            str(self.shtamp[0]): self.data.setdefault(r).setdefault(self.shtamp[0]),
-            self.shtamp[1]: self.data.setdefault(r).setdefault(self.shtamp[1]),
-            self.shtamp[2]: self.data.setdefault(r).setdefault(self.shtamp[2]),
-        }
-
-    #Добавить в json новые данные
-    def saveNewData(self, inn,password,client_secret):
-        self.loadDict();
-        self.data.update(self.doDict(inn,password,client_secret))
+    # Добавить в json новые данные
+    def saveNewData(self, inn, password, client_secret):
+        self.loadDict()
+        self.data.append(MyData(inn, password, client_secret, 0))
         self.saveDict()
 
-    #Некоторые тестовые значения(потом изменить)
+    # Некоторые тестовые значения(потом изменить)
     def testData(self):
         self.saveNewData(111, 'qwerty', 'vegan')
         self.saveNewData(222, 'asdfgh', 'ne vegan')
 
-    #Загрузить словарь из json
+    # Загрузить словарь из json
     def loadDict(self):
         with open("fns_info.json", "r") as read_file:
-            self.data = json.load(read_file)
-        self.i=len(self.data)
+             self.data.UnCodeData(json.load(read_file))
 
-    #Получить словарь с данными для установления соединения. Если такого нет, то вернуть None
-    def getInf(self)->dict:
-        self.lastuse=self.getCanUse()
-        if(self.lastuse==None):
+    # Получить словарь с данными для установления соединения. Если такого нет, то вернуть None
+    def getInf(self) -> MyData:
+        if (self.lastuse == None):
+            self.lastuse = self.getCanUse()
+        elif (self.tryToUse() != True):
+            self.lastuse = self.getCanUse()
+            return self.getInf()
+
+        if (self.lastuse == None):
             return None
-        return self.partDickt(self.lastuse)
-
-    #Проверка, можно ли ещё использовать последний выбранный набор
-    def tryToUse(self)->bool:
-        r=self.lastuse
-        if(int(self.data.setdefault(r).setdefault(self.shtamp[3])) >= self.enduse ):
-            return False
-        self.data.update(self.addUse(r))
+        self.data.GetI(self.lastuse).Use()
         self.saveDict()
+        return self.data.GetI(self.lastuse)
+
+    # Проверка, можно ли ещё использовать последний выбранный набор
+    def tryToUse(self) -> bool:
+        r = self.lastuse
+        if (self.data.GetI(r).GetUSE() >= self.enduse):
+            return False
         return True
 
-    #Получение номера набора, который можно использовать. Если такого нет, то вернуть None
-    def getCanUse(self)->str:
+    # Получение номера набора, который можно использовать. Если такого нет, то вернуть None
+    def getCanUse(self) -> int:
         self.loadDict()
-        myhave=list()
-        r=str( random.randrange(1, self.i+1, 1))
-        myhave.append(r)
-        donow=True
-        while(int(self.data.setdefault(r).setdefault(self.shtamp[3])) >= self.enduse and donow):
-            r = str( random.randrange(1, self.i+1, 1))
+        myhave = list()
+        r = (random.randrange(0, self.data.size(), 1))
+        donow = True
+        while (self.data.GetI(r).GetUSE() >= self.enduse and donow):
             myhave.append(r)
-            myhave=list(set(myhave))
-            if(len(myhave)==self.i):
-                donow=False
+            myhave = list(set(myhave))
+            if (len(myhave) == self.data.size()):
+                donow = False
+            r = (random.randrange(0, self.data.size(), 1))
 
-        if(donow):
+        if (donow):
             return r
         return None
 
-    #Обнулить количество использований
+    # Обнулить количество использований
     def zeroedUse(self):
         self.loadDict()
-
-        for j in range(self.i):
-            self.data.update(self.zeroedOne(str(j+1)))
+        self.data.ZeroUse()
         self.saveDict()
 
-    #Обнулить количество использований всех данных
+    # Обнулить количество использований всех данных
     def doEmpty(self):
-        self.data=dict()
+        self.data = MyDataMass()
         self.saveDict()

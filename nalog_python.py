@@ -30,9 +30,9 @@ class NalogRuPython:
 
         url = f'https://{self.HOST}/v2/mobile/users/lkfl/auth'
         payload = {
-            'inn': data.setdefault('INN'),
-            'client_secret': data.setdefault('CLIENT_SECRET'),
-            'password': data.setdefault('PASSWORD')
+            'inn': data.GetINN(),
+            'client_secret': data.GetSEC(),
+            'password': data.GetPASS()
         }
         headers = {
             'Host': self.HOST,
@@ -58,7 +58,8 @@ class NalogRuPython:
         :return: Ticket id. Example "5f3bc6b953d5cb4f4e43a06c"
         """
         url = f'https://{self.HOST}/v2/ticket'
-        if(self.informator.tryToUse()):
+        data=self.informator.getInf()
+        if(data!=None):
             payload = {'qr': qr}
             headers = {
                 'Host': self.HOST,
