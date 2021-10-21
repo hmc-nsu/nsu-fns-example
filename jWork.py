@@ -7,16 +7,17 @@ from myData import MyDataMass, MyData
 class Jwork:
 
     def __init__(self):
-        self.data = MyDataMass()
-        self.enduse = 2
-        self.lastuse = None
 
-    # Сохранить текущий словарь
+        self.data = MyDataMass()  # Кастом массив данных
+        self.enduse = 1  # На каком количестве использований остановиться
+        self.lastuse = None  # номер последнего использованного набора данных
+
+    # Сохранить текущий массив
     def saveDict(self):
         with open("fns_info.json", "w") as write_file:
             json.dump(self.data.CodeMe(), write_file, indent=4)
 
-    # Вернуть словарь под номером r, причём только инн, пароль и секретное поле
+    # Вернуть массив под номером r
     def partDickt(self, r):
         return self.data.GetI(r)
 
@@ -31,16 +32,22 @@ class Jwork:
         self.saveNewData(111, 'qwerty', 'vegan')
         self.saveNewData(222, 'asdfgh', 'ne vegan')
 
-    # Загрузить словарь из json
+    # Загрузить массив из json
     def loadDict(self):
         with open("fns_info.json", "r") as read_file:
-             self.data.UnCodeData(json.load(read_file))
+            self.data.UnCodeData(json.load(read_file))
 
-    # Получить словарь с данными для установления соединения. Если такого нет, то вернуть None
+    # Получить массив с данными для установления соединения. Если такого нет, то вернуть None
     def getInf(self) -> MyData:
-        if (self.lastuse == None):
+
+        if self.lastuse is None:  # такой случай возможен только при установлении соединения или поиске новго набора,
+            # поэтому использование не добавляется
             self.lastuse = self.getCanUse()
-        elif (self.tryToUse() != True):
+            if self.lastuse is None:
+                return None  # Нет подходящих наборов
+            return self.data.GetI(self.lastuse)
+        elif not self.tryToUse():  # если набор исчерпал своё количество использований, последний
+            # использованный None и мы пытаемся найти новый
             self.lastuse = self.getCanUse()
             return self.getInf()
 
